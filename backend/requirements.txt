@@ -4,3 +4,4 @@ pydantic
 requests
 flake8
 pytest
+pylint

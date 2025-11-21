@@ -28,7 +28,9 @@ services:
       - ./frontend:/app
       # Optional: Explicitly mount node_modules outside the sync to prevent issues
       - /app/node_modules
+    environment:
+      VITE_BACKEND_URL: http://backend:8000
     # CRITICAL: Command to run the Vite development server
-    command: npm run dev -- --host 0.0.0.0 --port 5173
+    #command: npm run dev -- --host 0.0.0.0 --port 5173
     depends_on:
       - backend
