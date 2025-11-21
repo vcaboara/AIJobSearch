@@ -37,16 +37,21 @@ jobs:
       - name: Build Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          push: false # Don't push yet, just build to verify
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/job-finder-worker:latest
+          # The context defines the directory that is sent to the Docker daemon.
+          # We want to send the whole backend folder, as it contains all Python files and requirements.
+          context: ./backend
+          # The 'file' input specifies the path to the Dockerfile *relative to the context*.
+          # Since the Dockerfile is inside the backend/ folder, it's just named 'Dockerfile' relative to the context.
+          file: Dockerfile
+          push: false
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ai-job-search-worker:latest
 
       - name: Archive Built Artifacts (Optional)
         # Saves the successfully built image for potential reuse in later stages
         uses: actions/upload-artifact@v4
         with:
-          name: job-finder-worker-image
-          path: /tmp/job-finder-worker.tar # Docker save path (requires intermediate step)
+          name: ai-job-search-worker-image
+          path: /tmp/ai-job-search-worker.tar # Docker save path (requires intermediate step)
 
       # -------------------------------------------------------------------------
       # React Front-end Build (Simulating the Single-File React App from earlier)
@@ -66,7 +71,7 @@ jobs:
       - name: Archive Front-end Build
         uses: actions/upload-artifact@v4
         with:
-          name: job-finder-ui-build
+          name: ai-job-search-ui-build
           path: build
 
   # -------------------------------------------------------------------------
@@ -89,8 +94,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/job-finder-worker:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/job-finder-worker:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/ai-job-search-worker:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/ai-job-search-worker:${{ github.sha }}
 
   # -------------------------------------------------------------------------
   # JOB 3: CD - Deploy Static Front-end (React UI)
@@ -103,7 +108,7 @@ jobs:
       - name: Download Front-end Artifact
         uses: actions/download-artifact@v4
         with:
-          name: job-finder-ui-build
+          name: ai-job-search-ui-build
           path: build
 
       - name: Deploy to GitHub Pages
@@ -111,4 +116,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build
-          cname: your-job-finder.com # Optional: if you map a custom domain
+          cname: your-ai-job-search.com # Optional: if you map a custom domain
