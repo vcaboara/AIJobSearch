@@ -77,43 +77,43 @@ jobs:
   # -------------------------------------------------------------------------
   # JOB 2: CD - Publish Docker Container (Requires CI success)
   # -------------------------------------------------------------------------
-  cd_publish_worker:
-    needs: [ci_test_and_build]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+  #cd_publish_worker:
+  #  needs: [ci_test_and_build]
+  #  runs-on: ubuntu-latest
+  #  if: github.ref == 'refs/heads/main'
+  #  steps:
+  #    - name: Log in to Docker Hub
+  #      uses: docker/login-action@v3
+  #      with:
+  #        username: ${{ secrets.DOCKERHUB_USERNAME }}
+  #        password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/ai-job-search-worker:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/ai-job-search-worker:${{ github.sha }}
+  #    - name: Build and Push Docker Image
+  #      uses: docker/build-push-action@v5
+  #      with:
+  #        context: .
+  #        push: true
+  #        tags: |
+  #          ${{ secrets.DOCKERHUB_USERNAME }}/ai-job-search-worker:latest
+  #          ${{ secrets.DOCKERHUB_USERNAME }}/ai-job-search-worker:${{ github.sha }}
 
   # -------------------------------------------------------------------------
   # JOB 3: CD - Deploy Static Front-end (React UI)
   # -------------------------------------------------------------------------
-  cd_deploy_frontend:
-    needs: [ci_test_and_build]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Download Front-end Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ai-job-search-ui-build
-          path: build
+  #cd_deploy_frontend:
+  #  needs: [ci_test_and_build]
+  #  runs-on: ubuntu-latest
+  #  if: github.ref == 'refs/heads/main'
+  #  steps:
+  #    - name: Download Front-end Artifact
+  #      uses: actions/download-artifact@v4
+  #      with:
+  #        name: ai-job-search-ui-build
+  #        path: build
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
-          cname: your-ai-job-search.com # Optional: if you map a custom domain
+  #    - name: Deploy to GitHub Pages
+  #      uses: peaceiris/actions-gh-pages@v3
+  #      with:
+  #        github_token: ${{ secrets.GITHUB_TOKEN }}
+  #        publish_dir: ./build
+  #        cname: your-ai-job-search.com # Optional: if you map a custom domain
