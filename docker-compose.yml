@@ -1,0 +1,34 @@
+
+services:
+  # --- Backend Service (FastAPI) ---
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the local backend folder for development
+      - ./backend:/app
+    environment:
+      PYTHONUNBUFFERED: 1
+    # Command to run the development server (uvicorn)
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+  
+  # --- Frontend Service (React/Vite) ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    # CRITICAL: Mount the local frontend folder into the container's working directory (/app)
+    # This allows file changes on your host machine to be instantly reflected in the container.
+    volumes:
+      - ./frontend:/app
+      # Optional: Explicitly mount node_modules outside the sync to prevent issues
+      - /app/node_modules
+    # CRITICAL: Command to run the Vite development server
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+    depends_on:
+      - backend
