@@ -37,12 +37,12 @@ jobs:
       - name: Build Docker Image
         uses: docker/build-push-action@v5
         with:
-          # The context defines the directory that is sent to the Docker daemon.
-          # We want to send the whole backend folder, as it contains all Python files and requirements.
+          # Set the context to the backend directory. This ensures the Docker daemon only
+          # sees the necessary files (Python code, requirements.txt) for the build.
           context: ./backend
-          # The 'file' input specifies the path to the Dockerfile *relative to the context*.
-          # Since the Dockerfile is inside the backend/ folder, it's just named 'Dockerfile' relative to the context.
-          file: Dockerfile
+          # CRITICAL FIX: Explicitly point to the Dockerfile using its full path
+          # relative to the repository root. This resolves runner ambiguities.
+          file: ./backend/Dockerfile
           push: false
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/ai-job-search-worker:latest
 
