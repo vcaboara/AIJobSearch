@@ -2,6 +2,9 @@ fastapi
 uvicorn[standard]
 pydantic
 requests
+google-genai
+python-dotenv
+
 flake8
 pytest
 pylint
