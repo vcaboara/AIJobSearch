@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impact Job Finder</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .card {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body class="p-6 md:p-10">
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl card">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">AIF Impact Job Finder (Local/Container)</h1>
+            <p class="text-gray-600">This application runs locally using Flask and the Gemini SDK for reliable API
+                access.</p>
+        </header>
+
+        <!-- Search Input -->
+        <div class="mb-6">
+            <label for="search-query" class="block text-sm font-medium text-gray-700 mb-2">Enter your job search
+                query:</label>
+            <div class="flex space-x-3">
+                <input type="text" id="search-query"
+                    placeholder="E.g., 'Director of Climate Tech Fund' or 'Impact Investor NYC'"
+                    class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                <button id="search-button"
+                    class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition disabled:bg-indigo-400 flex items-center justify-center">
+                    <span id="button-text">Search Jobs</span>
+                    <svg id="loading-spinner" class="animate-spin h-5 w-5 ml-2 text-white hidden" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Status Message -->
+        <div id="status-message" class="mb-6 p-3 rounded-lg text-sm hidden"></div>
+
+        <!-- Results Area -->
+        <div id="results-area">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Search Results (Grounded by Gemini)</h2>
+            <div id="job-listings" class="space-y-4">
+                <p class="text-gray-500">Search results will appear here after you run a query.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchButton = document.getElementById('search-button');
+            const searchQuery = document.getElementById('search-query');
+            const jobListings = document.getElementById('job-listings');
+            const statusMessage = document.getElementById('status-message');
+            const buttonText = document.getElementById('button-text');
+            const spinner = document.getElementById('loading-spinner');
+
+            const setStatus = (message, type = 'info') => {
+                statusMessage.textContent = message;
+                statusMessage.className = 'mb-6 p-3 rounded-lg text-sm'; // Reset classes
+                statusMessage.classList.remove('hidden');
+
+                if (type === 'success') {
+                    statusMessage.classList.add('bg-green-100', 'text-green-800');
+                } else if (type === 'error') {
+                    statusMessage.classList.add('bg-red-100', 'text-red-800');
+                } else { // info
+                    statusMessage.classList.add('bg-blue-100', 'text-blue-800');
+                }
+            };
+
+            const toggleLoading = (isLoading) => {
+                searchButton.disabled = isLoading;
+                if (isLoading) {
+                    buttonText.textContent = 'Searching...';
+                    spinner.classList.remove('hidden');
+                } else {
+                    buttonText.textContent = 'Search Jobs';
+                    spinner.classList.add('hidden');
+                }
+            };
+
+            const renderJobs = (jobs) => {
+                jobListings.innerHTML = '';
+                if (jobs.length === 0) {
+                    jobListings.innerHTML = '<p class="text-gray-500">No relevant jobs found.</p>';
+                    return;
+                }
+
+                jobs.forEach(job => {
+                    const jobCard = document.createElement('div');
+                    jobCard.className = 'p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition';
+
+                    jobCard.innerHTML = `
+                        <h3 class="text-lg font-bold text-indigo-700">${job.title}</h3>
+                        <p class="text-sm text-gray-600 mb-2">${job.company}</p>
+                        <p class="text-gray-700 text-sm italic">${job.summary}</p>
+                        <a href="${job.url}" target="_blank" class="mt-2 inline-block text-indigo-600 hover:text-indigo-800 text-xs font-semibold">
+                            View Listing →
+                        </a>
+                    `;
+                    jobListings.appendChild(jobCard);
+                });
+            };
+
+            const handleSearch = async () => {
+                const query = searchQuery.value.trim();
+                if (!query) {
+                    setStatus('Please enter a search query.', 'error');
+                    return;
+                }
+
+                toggleLoading(true);
+                jobListings.innerHTML = '';
+                setStatus('Searching the web using Gemini\'s grounded search...', 'info');
+
+                try {
+                    const response = await fetch('/search', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query: query })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to fetch search results from server.');
+                    }
+
+                    setStatus(data.message || 'Search successful.', 'success');
+                    renderJobs(data.jobs || []);
+
+                } catch (error) {
+                    console.error("Fetch Error:", error);
+                    setStatus(`Error: ${error.message}. Check your server console.`, 'error');
+                    jobListings.innerHTML = '<p class="text-red-500">Error retrieving results. Is the Python server running?</p>';
+                } finally {
+                    toggleLoading(false);
+                }
+            };
+
+            searchButton.addEventListener('click', handleSearch);
+            searchQuery.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleSearch();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
